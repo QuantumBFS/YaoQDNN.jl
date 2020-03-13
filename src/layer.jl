@@ -1,10 +1,9 @@
-using LinearAlgebra
 using Yao
 
 include("circuit.jl")
 include("hamiltonians.jl")
 
-export QNNL, forward, back_propagation
+export QNNL
 export Layer
 
 abstract type Layer{T<:Real} end
@@ -28,11 +27,11 @@ end
 function QNNL{T}(he::HardwareEfficientAnsatz, nbit::Integer, in_dim::Integer,
 				npara::Integer, Hami::Array{<:YaoBlocks.AbstractBlock, 1};
 				no_bias = false) where {T}
-	w = (rand(T, npara) .- 0.5) * 2π
+	w = T.((rand(npara) .- 0.5) * 2π)
 	if no_bias
 		b = T[]
 	else
-		b = rand(T, size(Hami)) .- 0.5
+		b = T.(rand(length(Hami)) .- 0.5)
 	end
 	QNNL{T}(he, nbit, in_dim, w, Hami, b)
 end
