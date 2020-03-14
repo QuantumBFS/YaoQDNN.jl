@@ -1,5 +1,6 @@
 using Flux
 import Flux: params
+using LinearAlgebra
 
 using Zygote
 import Zygote: @adjoint
@@ -23,7 +24,7 @@ end
 
 params(ql::QNNL{T}) where {T} = params(ql.params, ql.bias)
 
-@adjoint apply(ql::QNNL{T}, x) where {T} = (apply(ql,x), h̄ -> forwardAD(ql, x, h̄))
+@adjoint apply(ql::QNNL{T}, x) where {T} = (apply(ql,x), h̄ -> backwardAD(ql, x, h̄))
 
 # need to be developed
 
@@ -33,8 +34,8 @@ function forwardAD(ql::QNNL{T}, x, h̄) where {T}
 	s2 = size(ql.params, 1)
 	s3 = size(ql.bias, 1)
 
-	L_x = zeros(T, s1, m)
-	L_w = zeros(T, s2, m)
+	L_x = zeros(T, s1)
+	L_w = zeros(T, s2)
 
 	for i = 1:s1
 		x[i] += T(π/2)
@@ -43,7 +44,7 @@ function forwardAD(ql::QNNL{T}, x, h̄) where {T}
 		y_neg = ql(x)
 		x[i] += T(π/2)
 
-		L_x[i, :] = (y_pos - y_neg) / 2
+		L_x[i] = dot((y_pos - y_neg), h̄) / 2
 	end
 
 	for i = 1:s2
@@ -53,13 +54,13 @@ function forwardAD(ql::QNNL{T}, x, h̄) where {T}
 		y_neg = ql(x)
 		ql.params[i] += T(π/2)
 
-		L_w[i, :] = (y_pos - y_neg) / 2
+		L_w[i] = dot((y_pos - y_neg), h̄) / 2
 	end
 
 	if s3 > 0
-		return [L_w*T.(h̄), T.(h̄)], L_x*T.(h̄)
+		return [L_w, T.(h̄)], L_x
 	else
-		return [L_w*T.(h̄), ql.bias], L_x*T.(h̄)
+		return [L_w, ql.bias], L_x
 	end
 end
 
@@ -86,6 +87,7 @@ function backwardAD(ql::QNNL{T}, x, h̄) where {T}
 	Hs = ql.Hami
 
 	D = ArrayReg(sum([expect'(Hs[i], psi).state for i = 1:m] .* h̄))
+	D.state *= 2
 
 	apply_back!((psi, D), transform, w̄)
 	apply_back!((psi, D), encoder, x̄)
