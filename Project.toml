@@ -3,8 +3,15 @@ uuid = "634fcfd4-b0f0-4729-9d83-d4b7fce8f79a"
 authors = ["Chen Zhao", "Roger-luo"]
 version = "0.1.0"
 
+[deps]
+Flux = "587475ba-b771-5e3f-ad9e-33799f191a9c"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+Yao = "5872b779-8223-5990-8dd0-5abbb0748c8c"
+YaoBlocks = "418bc28f-b43b-5e0b-a6e7-61bbc1a2c1df"
+Zygote = "e88e6eb3-aa80-5325-afca-941959d7151f"
+
 [compat]
-julia = "1.3.1"
+julia = "1.2.0"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
