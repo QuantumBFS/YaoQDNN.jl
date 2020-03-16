@@ -3,8 +3,10 @@ import Flux: params
 using LinearAlgebra
 
 using Zygote
-import Zygote: @adjoint
+import Zygote: @adjoint, AContext
 using YaoBlocks.AD
+
+Flux.@functor QNNL
 
 function apply(ql::QNNL{T}, x) where T
 	cir = chain(ql.encoder, ql.transform)
@@ -24,10 +26,19 @@ end
 
 params(ql::QNNL{T}) where {T} = params(ql.params, ql.bias)
 
-@adjoint apply(ql::QNNL{T}, x) where {T} = (apply(ql,x), h̄ -> backwardAD(ql, x, h̄))
+function Zygote._pullback(cx::AContext, ql::QNNL{T}, x) where {T}
+	out = apply(ql, x)
+	out, function pullback(h̄)
+		∇ql, ∇x = backwardAD(ql, x, h̄)
+		∇W = ∇ql[1]
+		∇b = ∇ql[2]
+		Zygote.accum_param(cx, ql.params, ∇W)
+		Zygote.accum_param(cx, ql.bias, ∇b)
+		return ((W = ∇W, b = ∇b), ∇x)
+	end
+end
 
-# need to be developed
-
+# TODO need a faithful way
 function forwardAD(ql::QNNL{T}, x, h̄) where {T}
 	m = size(ql.Hami, 1)
 	s1 = size(x, 1)
