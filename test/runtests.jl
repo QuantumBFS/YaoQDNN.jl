@@ -1,6 +1,5 @@
 using YaoQDNN
 using Yao
-using YaoAD
 using Flux
 using Test
 
