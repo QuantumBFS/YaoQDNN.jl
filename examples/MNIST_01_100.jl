@@ -71,7 +71,7 @@ ql0_1 = m0[1]
 ql0_2 = m0[2]
 ql0_3 = m0[3]
 
-nshots = 10000
+nshots = 100
 m_faithful = Chain(
     QNNL_faithful(ql0_1, nshots),
     QNNL_faithful(ql0_2, nshots),
